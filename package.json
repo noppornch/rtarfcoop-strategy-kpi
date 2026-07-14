@@ -1,0 +1,15 @@
+{
+  "name": "rtarfcoop-strategic-tracking",
+  "version": "1.0.0",
+  "description": "Strategic & Project Management Web Application",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "init-db": "node init_db.js"
+  },
+  "dependencies": {
+    "express": "^4.21.1",
+    "express-session": "^1.18.1",
+    "sqlite3": "^5.1.7"
+  }
+}

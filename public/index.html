@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบบริหารจัดการและติดตามแผนกลยุทธ์ - RTARFCOOP</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- Chart.js for beautiful dashboards -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Sidebar Navigation Drawer -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <i data-lucide="target" style="width: 24px; height: 24px; stroke-width: 2.5; color: var(--primary);"></i>
+          <span>RTARFCOOP</span>
+        </div>
+        <button id="sidebar-close" class="menu-toggle" style="color: var(--text-muted);">
+          <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+        </button>
+      </div>
+
+      <div class="sidebar-content">
+        <!-- Strategic Plan Selection Dropdown -->
+        <div class="tree-select-container">
+          <span class="tree-node-title">แผนกลยุทธ์</span>
+          <select id="plan-select" class="plan-select" style="width: 100%; margin-top: 4px;"></select>
+          
+          <div id="admin-plan-actions" style="margin-top: 8px; display: none;">
+            <button id="add-plan-btn" class="btn btn-secondary" style="width: 100%; padding: 6px 12px; font-size: 12px;">
+              <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+              <span>เพิ่มแผนกลยุทธ์</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Strategy Hierarchy Tree (Missions -> Strategies) -->
+        <div class="tree-select-container">
+          <div class="tree-node-title">
+            <span>โครงสร้างแผน</span>
+            <button id="add-node-btn" class="icon-btn" style="width: 24px; height: 24px; display: none;" title="เพิ่มโครงสร้างแผน (พันธกิจ/กลยุทธ์)">
+              <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+            </button>
+          </div>
+          <div id="hierarchy-tree" style="margin-top: 6px;">
+            <!-- Tree will be loaded dynamically -->
+            <div style="text-align: center; color: var(--text-muted); font-size: 13px; padding: 20px 0;">
+              กำลังโหลดโครงสร้างแผน...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Profile & Settings in Sidebar Footer -->
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar" id="user-avatar-char">U</div>
+          <div class="user-info">
+            <span class="user-name" id="user-display-name">Username</span>
+            <span class="user-role" id="user-display-role">Role</span>
+          </div>
+        </div>
+        <button id="logout-btn" class="icon-btn" title="ออกจากระบบ" style="border: none; background: none; color: #ef4444;">
+          <i data-lucide="log-out" style="width: 18px; height: 18px;"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Layout Surface -->
+    <main class="main-layout">
+      <!-- Top header bar -->
+      <header class="top-header">
+        <div class="header-left">
+          <button id="sidebar-open" class="menu-toggle">
+            <i data-lucide="menu" style="width: 24px; height: 24px;"></i>
+          </button>
+          <div class="plan-selector-container">
+            <h2 id="current-plan-title" style="font-size: 16px; font-weight: 600; color: var(--secondary);">กำลังโหลด...</h2>
+          </div>
+        </div>
+        <div class="header-right">
+          <!-- Light/Dark Mode Switch -->
+          <button id="theme-toggle-btn" class="theme-toggle" title="สลับโหมดมืด/สว่าง">
+            <i data-lucide="moon" style="width: 20px; height: 20px;"></i>
+          </button>
+          <span class="badge badge-completed" id="connection-status">
+            <i data-lucide="check-circle" style="width: 12px; height: 12px;"></i>
+            <span>ออนไลน์</span>
+          </span>
+        </div>
+      </header>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs">
+        <div class="tab-link active" data-tab="dashboard">
+          <i data-lucide="bar-chart-3" style="width: 16px; height: 16px;"></i>
+          <span>Dashboard ภาพรวม</span>
+        </div>
+        <div class="tab-link" data-tab="workspace">
+          <i data-lucide="briefcase" style="width: 16px; height: 16px;"></i>
+          <span>พื้นที่ทำงานติดตามแผน</span>
+        </div>
+        <div class="tab-link" data-tab="my-tasks">
+          <i data-lucide="check-square" style="width: 16px; height: 16px;"></i>
+          <span>งานที่รับผิดชอบ</span>
+        </div>
+        <div class="tab-link" data-tab="user-management" id="tab-user-management" style="display: none;">
+          <i data-lucide="users" style="width: 16px; height: 16px;"></i>
+          <span>จัดการผู้ใช้งาน</span>
+        </div>
+        <div class="tab-link" data-tab="db-admin" id="tab-db-admin" style="display: none;">
+          <i data-lucide="database" style="width: 16px; height: 16px;"></i>
+          <span>จัดการฐานข้อมูล</span>
+        </div>
+      </nav>
+
+      <!-- 1. DASHBOARD PANEL -->
+      <section id="panel-dashboard" class="tab-content-panel active">
+        <!-- Stat Cards Row -->
+        <div class="dashboard-grid">
+          <div class="stat-card">
+            <div class="stat-icon"><i data-lucide="award" style="width: 22px; height: 22px;"></i></div>
+            <div class="stat-details">
+              <span class="stat-title">พันธกิจ</span>
+              <span class="stat-value" id="stat-missions">0</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i data-lucide="compass" style="width: 22px; height: 22px;"></i></div>
+            <div class="stat-details">
+              <span class="stat-title">กลยุทธ์</span>
+              <span class="stat-value" id="stat-strategies">0</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i data-lucide="layers" style="width: 22px; height: 22px;"></i></div>
+            <div class="stat-details">
+              <span class="stat-title">กิจกรรมทั้งหมด</span>
+              <span class="stat-value" id="stat-activities">0</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i data-lucide="trending-up" style="width: 22px; height: 22px;"></i></div>
+            <div class="stat-details">
+              <span class="stat-title">ความก้าวหน้ารวม</span>
+              <span class="stat-value" id="stat-overall-progress">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analytics Row -->
+        <div class="analytics-row">
+          <!-- Charts -->
+          <div class="chart-card">
+            <div class="card-title">
+              <span>สถานะการดำเนินการ (ก้าวหน้าเฉลี่ยเทียบจำนวนงาน)</span>
+            </div>
+            <div class="chart-container">
+              <canvas id="statusChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Mission Progress List -->
+          <div class="chart-card">
+            <div class="card-title">ความก้าวหน้ารายพันธกิจ</div>
+            <div class="mission-progress-list" id="mission-progress-list">
+              <!-- Rendered Dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Budget & Health Row -->
+        <div class="summary-row">
+          <div class="summary-card">
+            <div class="card-title">งบประมาณโครงการ</div>
+            <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+              <div>
+                <span class="form-label" style="margin-bottom: 2px;">งบประมาณจัดสรรทั้งหมด</span>
+                <span class="stat-value" id="budget-allocated-total" style="font-size: 20px; color: var(--primary);">฿0.00</span>
+              </div>
+              <div>
+                <span class="form-label" style="margin-bottom: 2px;">งบประมาณใช้จริงรวม</span>
+                <span class="stat-value" id="budget-spent-total" style="font-size: 20px; color: var(--secondary);">฿0.00</span>
+              </div>
+              <div class="progress-container" style="height: 10px; margin-top: 4px;">
+                <div id="budget-progress-fill" class="progress-fill" style="width: 0%; background-color: var(--secondary);"></div>
+              </div>
+              <span id="budget-ratio-text" style="font-size: 12px; color: var(--text-muted); text-align: right; display: block;">ใช้ไป 0% ของงบประมาณ</span>
+            </div>
+          </div>
+
+          <div class="summary-card">
+            <div class="card-title">สุขภาพโครงการ (Project Health)</div>
+            <div class="health-list">
+              <div class="health-item">
+                <div class="health-label">
+                  <span class="health-indicator health-ontrack"></span>
+                  <span>ปกติ (On Track)</span>
+                </div>
+                <span class="health-count" id="health-ontrack-count">0 กิจกรรม</span>
+              </div>
+              <div class="health-item">
+                <div class="health-label">
+                  <span class="health-indicator health-atrisk"></span>
+                  <span>มีความเสี่ยง (At Risk)</span>
+                </div>
+                <span class="health-count" id="health-atrisk-count">0 กิจกรรม</span>
+              </div>
+              <div class="health-item">
+                <div class="health-label">
+                  <span class="health-indicator health-offtrack"></span>
+                  <span>ล่าช้า/วิกฤต (Off Track)</span>
+                </div>
+                <span class="health-count" id="health-offtrack-count">0 กิจกรรม</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="summary-card">
+            <div class="card-title">อัตราความสำเร็จ (KPI Success Rate)</div>
+            <div style="text-align: center; padding: var(--space-md) 0;">
+              <span class="stat-value" id="success-rate-val" style="font-size: 48px; color: var(--primary);">0/0</span>
+              <span class="form-label" style="margin-top: 4px;">จำนวนกิจกรรมเสร็จสมบูรณ์</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. WORKSPACE PANEL (STRATEGY VIEW) -->
+      <section id="panel-workspace" class="tab-content-panel">
+        <div class="workspace-container">
+          <!-- Selection Breadcrumb & Title -->
+          <div class="workspace-header-block" id="workspace-header-block" style="display: none;">
+            <div class="strategic-breadcrumb">
+              <span id="breadcrumb-mission">พันธกิจ</span>
+              <i data-lucide="chevron-right" class="breadcrumb-separator" style="width: 12px; height: 12px;"></i>
+              <span id="breadcrumb-strategy">กลยุทธ์</span>
+            </div>
+            <div class="objective-display-name" id="objective-display-name">
+              เลือกหัวข้อเป้าหมายกลยุทธ์ในโครงสร้างด้านซ้ายเพื่อดูงานโครงการ
+            </div>
+
+            <!-- Strategy Metadata Block (Action Plan & Objectives list) -->
+            <div id="strategy-metadata-block" style="margin-top: var(--space-md); background-color: var(--bg-app); border: 1px solid var(--border); padding: var(--space-md); border-radius: var(--radius-md);">
+              <div style="margin-bottom: var(--space-xs);">
+                <strong style="font-size: 13px; color: var(--text-muted);">แผนงาน (Action Plan):</strong>
+                <span id="metadata-action-plan" style="font-size: 14px; font-weight: 600; color: var(--secondary); margin-left: var(--space-xs);">กำลังโหลด...</span>
+              </div>
+              <div>
+                <strong style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 4px;">วัตถุประสงค์ (Objectives):</strong>
+                <div id="metadata-objectives" style="font-size: 13px; white-space: pre-line; line-height: 1.6; color: var(--text-main); font-weight: 500; padding-left: var(--space-md); border-left: 3px solid var(--primary);">กำลังโหลด...</div>
+              </div>
+              <div>
+                <strong style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 4px;">ผู้จัดการ (Manager):</strong>
+                <div id="metadata-manager" style="font-size: 13px; white-space: pre-line; line-height: 1.6; color: var(--text-main); font-weight: 500; padding-left: var(--space-md); border-left: 3px solid var(--primary);">กำลังโหลด...</div>
+              </div>              
+            </div>
+            
+            <div class="workspace-actions">
+              <div style="font-size: 13px; color: var(--text-muted);">
+                <i data-lucide="info" style="width: 14px; height: 14px; display: inline; vertical-align: middle; margin-right: 4px;"></i>
+                <span>กรอกและแก้ไขตัวชี้วัดหรือกิจกรรมติดตามภายใต้กลยุทธ์นี้</span>
+              </div>
+              <button id="create-activity-btn" class="btn btn-primary" style="display: none;">
+                <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i>
+                <span>เพิ่มกิจกรรม/ตัวชี้วัด</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div class="empty-workspace-state" id="workspace-empty-state">
+            <i data-lucide="arrow-left-right" class="empty-workspace-icon" style="width: 48px; height: 48px;"></i>
+            <h3>ยังไม่ได้เลือกเป้าหมายแผน</h3>
+            <p style="margin-top: 6px; font-size: 14px;">กรุณาคลิกเลือกหัวข้อกลยุทธ์ในแผนการจัดการแถบด้านซ้าย เพื่อเข้าจัดการกิจกรรมและกรอกข้อมูล</p>
+          </div>
+
+          <!-- Activities Listing Grid -->
+          <div class="activities-grid" id="activities-list-container">
+            <!-- Loaded Dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. MY TASKS PANEL -->
+      <section id="panel-my-tasks" class="tab-content-panel">
+        <div class="workspace-container">
+          <div class="workspace-header-block">
+            <h3 style="font-size: 18px; font-weight: 700; color: var(--text-main);">งานและโครงการที่ฉันรับผิดชอบ</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+              กรอกสรุปเปอร์เซ็นต์ขั้นตอนย่อย และอัปเดตรายงานผลงานจริงของกิจกรรมที่คุณเป็นผู้รับผิดชอบหลัก
+            </p>
+          </div>
+          <div class="activities-grid" id="my-tasks-container">
+            <!-- Loaded Dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. USER MANAGEMENT PANEL (Admin Only) -->
+      <section id="panel-user-management" class="tab-content-panel">
+        <div class="workspace-container">
+          <div class="workspace-header-block" style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <h3 style="font-size: 18px; font-weight: 700; color: var(--text-main);">การจัดการรายชื่อผู้ใช้งานระบบ</h3>
+              <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">เพิ่มข้อมูลพนักงาน กำหนดบทบาทสิทธิ์ (Admin/Manager/User) และแก้ไขบัญชีผู้ใช้</p>
+            </div>
+            <button id="add-user-btn" class="btn btn-primary">
+              <i data-lucide="user-plus" style="width: 16px; height: 16px;"></i>
+              <span>เพิ่มผู้ใช้งาน</span>
+            </button>
+          </div>
+
+          <div class="users-table-container">
+            <table class="data-table" id="users-table">
+              <thead>
+                <tr>
+                  <th>ชื่อ-นามสกุล</th>
+                  <th>ชื่อผู้ใช้งาน (Username)</th>
+                  <th>สิทธิ์การใช้งาน (Role)</th>
+                  <th style="text-align: right;">การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="users-table-body">
+                <!-- User rows will be loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. DATABASE ADMIN PANEL -->
+      <section id="panel-db-admin" class="tab-content-panel">
+        <div class="dashboard-header-row" style="margin-bottom: var(--space-md);">
+          <div>
+            <h3 style="font-size: 18px; font-weight: 700; color: var(--text-main);">จัดการฐานข้อมูล SQLite (phpMyAdmin Lite)</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">เรียกดูโครงสร้าง เพิ่ม แก้ไข และลบข้อมูลดิบในแต่ละตารางของฐานข้อมูลโดยตรง</p>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: var(--space-md); margin-bottom: var(--space-md); align-items: center; background-color: var(--bg-card); padding: var(--space-md); border: 1px solid var(--border); border-radius: var(--radius-lg); flex-wrap: wrap;">
+          <div class="form-group" style="margin-bottom: 0; min-width: 250px;">
+            <label for="db-table-select" class="form-label" style="margin-bottom: 4px;">เลือกตารางข้อมูล</label>
+            <select id="db-table-select" class="form-control">
+              <option value="">-- เลือกตาราง --</option>
+            </select>
+          </div>
+          <button id="db-add-row-btn" class="btn btn-primary" style="margin-top: 18px; display: none;">
+            <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+            <span>เพิ่มแถวข้อมูล</span>
+          </button>
+          <button id="db-export-csv-btn" class="btn btn-secondary" style="margin-top: 18px; display: none;">
+            <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+            <span>ส่งออก CSV</span>
+          </button>
+        </div>
+
+        <div class="users-table-container" style="max-height: 500px; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); background-color: var(--bg-card);">
+          <table class="data-table" id="db-admin-table">
+            <thead id="db-admin-table-head">
+              <tr>
+                <th style="color: var(--text-muted); font-style: italic;">กรุณาเลือกตารางเพื่อดูข้อมูล</th>
+              </tr>
+            </thead>
+            <tbody id="db-admin-table-body">
+              <tr>
+                <td style="text-align: center; padding: 40px; color: var(--text-muted);">ไม่มีข้อมูลที่จะแสดงผล</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ---------------------------------------------------
+       MODALS
+       --------------------------------------------------- -->
+
+  <!-- A. Create Strategic Plan Cycle Modal -->
+  <div class="modal-overlay" id="modal-plan">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="plan-modal-title">เพิ่มแผนกลยุทธ์ชุดใหม่</h3>
+        <button class="close-modal-btn" data-modal="modal-plan"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
+      </div>
+      <form id="plan-form">
+        <div class="modal-body">
+          <input type="hidden" id="plan-id">
+          <div class="form-group">
+            <label for="plan-name-input" class="form-label">ชื่อแผนกลยุทธ์</label>
+            <input type="text" id="plan-name-input" class="form-control" placeholder="เช่น แผนกลยุทธ์ ฉบับที่ 3 พ.ศ. 2568 – 2570" required>
+          </div>
+          <div class="input-row">
+            <div class="form-group">
+              <label for="plan-start-year" class="form-label">ปีเริ่มต้น พ.ศ.</label>
+              <input type="number" id="plan-start-year" class="form-control" placeholder="เช่น 2568" required>
+            </div>
+            <div class="form-group">
+              <label for="plan-end-year" class="form-label">ปีสิ้นสุด พ.ศ.</label>
+              <input type="number" id="plan-end-year" class="form-control" placeholder="เช่น 2570" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-modal="modal-plan">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary" id="plan-submit-btn">บันทึกแผนกลยุทธ์</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- B. Create Node Modal (Missions / Strategies + Metadata) -->
+  <div class="modal-overlay" id="modal-node">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="node-modal-title">เพิ่มหัวข้อโครงสร้างแผน</h3>
+        <button class="close-modal-btn" data-modal="modal-node"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
+      </div>
+      <form id="node-form">
+        <div class="modal-body">
+          <input type="hidden" id="node-id">
+          
+          <div class="form-group">
+            <label for="node-type-select" class="form-label">ประเภทโครงสร้าง</label>
+            <select id="node-type-select" class="form-control" required>
+              <option value="mission">พันธกิจ (Mission)</option>
+              <option value="strategy">กลยุทธ์ (Strategy)</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="node-parent-group" style="display: none;">
+            <label for="node-parent-select" class="form-label">ผูกกับพันธกิจ</label>
+            <select id="node-parent-select" class="form-control">
+              <option value="">-- กรุณาเลือกพันธกิจ --</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="node-seq-input" class="form-label">ลำดับที่ (Seq)</label>
+            <input type="number" id="node-seq-input" class="form-control" value="1" min="1" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="node-name-input" class="form-label">ชื่อกลยุทธ์ / พันธกิจ</label>
+            <textarea id="node-name-input" class="form-control" rows="2" placeholder="ระบุข้อความรายละเอียดกลยุทธ์หรือพันธกิจ..." required></textarea>
+          </div>
+
+          <!-- Strategy Metadata inputs -->
+          <div id="node-strategy-metadata" style="display: none; border-top: 1px solid var(--border); padding-top: var(--space-md); margin-top: var(--space-md);">
+            <div class="form-group">
+              <label for="node-manager-select" class="form-label">ผู้บริหารที่ดูแลกลยุทธ์นี้ (Strategy Manager)</label>
+              <select id="node-manager-select" class="form-control">
+                <option value="">-- เลือกผู้บริหาร --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="node-action-plan-input" class="form-label">แผนงาน (Action Plan Name)</label>
+              <input type="text" id="node-action-plan-input" class="form-control" placeholder="ระบุแผนงานประกอบ เช่น แผนพัฒนาระบบงาน">
+            </div>
+            <div class="form-group">
+              <label for="node-objectives-input" class="form-label">วัตถุประสงค์ประกอบ (Objectives - ระบุแยกข้อด้วยการขึ้นบรรทัดใหม่)</label>
+              <textarea id="node-objectives-input" class="form-control" rows="4" placeholder="ระบุวัตถุประสงค์ประกอบกลยุทธ์..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-modal="modal-node">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">บันทึกข้อมูล</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- C. Create / Edit Activity Modal -->
+  <div class="modal-overlay" id="modal-activity">
+    <div class="modal-card" style="max-width: 700px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="activity-modal-title">เพิ่มข้อมูลกิจกรรม/ตัวชี้วัด</h3>
+        <button class="close-modal-btn" data-modal="modal-activity"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
+      </div>
+      <form id="activity-form">
+        <div class="modal-body">
+          <input type="hidden" id="activity-id">
+          
+          <div class="input-row">
+            <div class="form-group" style="grid-column: span 1;">
+              <label for="act-seq" class="form-label">ลำดับที่ (Seq)</label>
+              <input type="number" id="act-seq" class="form-control" min="1" required>
+            </div>
+            <div class="form-group" style="grid-column: span 1;">
+              <label for="act-kpi-name" class="form-label">ตัวชี้วัด (KPI Name)</label>
+              <input type="text" id="act-kpi-name" class="form-control" placeholder="เช่น ร้อยละของระเบียบสหกรณ์ที่ได้รับการทบทวน" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="act-activity" class="form-label">รายละเอียดตัวชี้วัด (KPI Detail)</label>
+            <textarea id="act-activity" class="form-control" rows="2" placeholder="ระบุรายละเอียดกิจกรรม/ตัวชี้วัด..." required></textarea>
+          </div>
+
+          <div class="input-row">
+            <div class="form-group">
+              <label for="act-kpi-type" class="form-label">ประเภทการวัดผล</label>
+              <select id="act-kpi-type" class="form-control" required>
+                <option value="percentage">เปอร์เซ็นต์ความสำเร็จ (%)</option>
+                <option value="numeric">จำนวนรายการ (เป้าหมาย vs จริง)</option>
+                <option value="date">กำหนดวันที่เป้าหมาย</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="act-target-value" class="form-label">ค่าเป้าหมาย (Target)</label>
+              <input type="text" id="act-target-value" class="form-control" placeholder="เช่น 100, 5, 2026-08-31" required>
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div class="form-group">
+              <label for="act-start-date" class="form-label">วันที่เริ่มงาน</label>
+              <input type="date" id="act-start-date" class="form-control">
+            </div>
+            <div class="form-group">
+              <label for="act-end-date" class="form-label">วันที่กำหนดเสร็จ</label>
+              <input type="date" id="act-end-date" class="form-control">
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div class="form-group" style="grid-column: span 1;">
+              <label for="act-budget-allocated" class="form-label">งบประมาณโครงการจัดสรร (บาท)</label>
+              <input type="number" id="act-budget-allocated" class="form-control" min="0" value="0">
+            </div>
+            <div class="form-group" style="grid-column: span 1;">
+              <label class="form-label">ผู้รับผิดชอบกิจกรรมหลัก (พิมพ์ค้นหาเพื่อเลือก)</label>
+              <div class="tag-search-widget" id="assignees-widget">
+                <div class="tag-search-selected" id="assignees-tags">
+                  <!-- Selected user tags rendered dynamically -->
+                </div>
+                <div class="tag-search-input-wrapper">
+                  <input type="text" class="form-control tag-search-input" id="assignees-search-input" placeholder="พิมพ์ชื่อเจ้าหน้าที่เพื่อค้นหา..." autocomplete="off">
+                </div>
+                <ul class="tag-search-dropdown" id="assignees-dropdown">
+                  <!-- Filtered user list rendered dynamically -->
+                </ul>
+              </div>
+              <input type="hidden" id="assignees-selected-ids">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-modal="modal-activity">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">บันทึกกิจกรรม</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- D. Manage User Modal -->
+  <div class="modal-overlay" id="modal-user">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="user-modal-title">เพิ่มข้อมูลผู้ใช้งาน</h3>
+        <button class="close-modal-btn" data-modal="modal-user"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
+      </div>
+      <form id="user-form">
+        <div class="modal-body">
+          <input type="hidden" id="manage-user-id">
+          
+          <div class="form-group">
+            <label for="user-fullname" class="form-label">ชื่อ-นามสกุลจริง</label>
+            <input type="text" id="user-fullname" class="form-control" placeholder="เช่น นายสมชาย รักดี" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="user-username" class="form-label">ชื่อผู้ใช้งาน (Username)</label>
+            <input type="text" id="user-username" class="form-control" placeholder="เช่น somchai" required autocomplete="username">
+          </div>
+
+          <div class="form-group">
+            <label for="user-password" class="form-label">รหัสผ่าน (Password)</label>
+            <input type="password" id="user-password" class="form-control" placeholder="รหัสผ่านใหม่ (ปล่อยว่างหากไม่ต้องการแก้ไข)" autocomplete="new-password">
+            <span class="form-label" style="font-size: 11px; margin-top: 4px; font-weight: normal;">*สำหรับการสร้างผู้ใช้ใหม่ รหัสผ่านจำเป็นต้องกรอก</span>
+          </div>
+
+          <div class="form-group">
+            <label for="user-role" class="form-label">ระดับสิทธิ์ (Role)</label>
+            <select id="user-role" class="form-control" required>
+              <option value="user">ผู้กรอกข้อมูลทั่วไป (User)</option>
+              <option value="manager">ผู้บริหารโครงการ (Manager)</option>
+              <option value="admin">ผู้ดูแลระบบสูงสุด (Admin)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-modal="modal-user">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">บันทึกข้อมูลสมาชิก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- E. Delete Confirmation Modal -->
+  <div class="modal-overlay" id="modal-delete-confirm">
+    <div class="modal-card" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 class="modal-title" style="color: #ef4444;">ยืนยันการลบข้อมูล</h3>
+        <button class="close-modal-btn" data-modal="modal-delete-confirm"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
+      </div>
+      <form id="delete-confirm-form">
+        <div class="modal-body" style="text-align: center;">
+          <p id="delete-confirm-message" style="font-size: 14px; margin-bottom: var(--space-md); color: var(--text-main); line-height: 1.5;">กรุณาพิมพ์รหัสยืนยันเพื่อลบข้อมูลที่เลือก</p>
+          <div style="font-size: 24px; font-weight: 800; letter-spacing: 4px; padding: var(--space-sm); background-color: var(--bg-app); border-radius: var(--radius-md); margin-bottom: var(--space-md); color: var(--primary); user-select: none;" id="delete-confirm-code-display">ABCDEF</div>
+          <div class="form-group">
+            <input type="text" id="delete-confirm-input" class="form-control" placeholder="พิมพ์รหัสที่แสดงด้านบน" required autocomplete="off" style="text-align: center; font-size: 16px; font-weight: 700; text-transform: uppercase;">
+          </div>
+        </div>
+        <div class="modal-footer" style="justify-content: center; gap: var(--space-md);">
+          <button type="button" class="btn btn-secondary" data-modal="modal-delete-confirm">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary" id="delete-confirm-submit-btn" style="background-color: #ef4444; border-color: #ef4444;">ยืนยันการลบ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- F. DB Admin Add/Edit Row Modal -->
+  <div class="modal-overlay" id="modal-db-row">
+    <div class="modal-card" style="max-width: 550px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="db-row-modal-title">จัดการข้อมูลแถว</h3>
+        <button class="close-modal-btn" data-modal="modal-db-row"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
+      </div>
+      <form id="db-row-form">
+        <div class="modal-body" id="db-row-fields-container">
+          <!-- Dynamic input fields generated based on schema -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-modal="modal-db-row">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">บันทึกข้อมูล</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Main Frontend JS handlers -->
+  <script src="/js/auth.js"></script>
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
