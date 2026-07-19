@@ -21,7 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(session({
-  secret: 'rtarfcoop-strategic-secret-key-1234',
+  secret: process.env.SESSION_SECRET || 'rtarfcoop-strategic-secret-key-1234',
   resave: false,
   saveUninitialized: false,
   cookie: {

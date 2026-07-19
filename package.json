@@ -4,7 +4,7 @@
   "description": "Strategic & Project Management Web Application",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node --env-file=.env server.js",
     "init-db": "node init_db.js"
   },
   "dependencies": {
