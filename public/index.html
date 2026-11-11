@@ -119,6 +119,20 @@
 
       <!-- 1. DASHBOARD PANEL -->
       <section id="panel-dashboard" class="tab-content-panel active">
+        <!-- Dashboard Header Actions with Report Button -->
+        <div class="dashboard-actions-bar">
+          <div>
+            <h3 class="dashboard-heading">ภาพรวมการติดตามผลการดำเนินงาน</h3>
+            <p class="dashboard-subheading" id="dashboard-plan-label">ติดตามความก้าวหน้าและการดำเนินงานตามแผนกลยุทธ์ สอ.บก.ทท.</p>
+          </div>
+          <div class="dashboard-header-buttons">
+            <button id="btn-dashboard-print-full" class="btn btn-primary btn-print-full" title="ออกรายงาน PDF สำหรับทั้งเล่ม">
+              <i data-lucide="printer" style="width: 17px; height: 17px;"></i>
+              <span>ออกรายงาน PDF (ทั้งเล่ม)</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Stat Cards Row -->
         <div class="dashboard-grid">
           <div class="stat-card">
@@ -641,6 +655,54 @@
           <button type="submit" class="btn btn-primary">บันทึกข้อมูล</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- 7. Strategic Plan PDF Report Preview Modal -->
+  <div class="modal-overlay" id="modal-report-preview">
+    <div class="modal-card modal-card-fullscreen">
+      <div class="modal-header no-print">
+        <div class="modal-title-group" style="display: flex; align-items: center; gap: 8px;">
+          <i data-lucide="file-text" style="width: 22px; height: 22px; color: var(--primary);"></i>
+          <h3 class="modal-title" id="report-modal-title">รายงานติดตามผลการดำเนินงานตามแผนกลยุทธ์</h3>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button id="btn-print-report-modal" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
+            <i data-lucide="printer" style="width: 16px; height: 16px;"></i>
+            <span>พิมพ์ / บันทึก PDF (A4 แนวนอน)</span>
+          </button>
+          <button class="close-modal-btn" data-modal="modal-report-preview" title="ปิดหน้าต่าง">
+            <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="report-modal-toolbar no-print">
+        <div class="report-toolbar-item">
+          <span class="report-toolbar-label">ฉบับแผน:</span>
+          <select id="report-filter-plan" class="form-control" style="width: auto; min-width: 240px; font-size: 13px;"></select>
+        </div>
+        <div class="report-toolbar-item">
+          <span class="report-toolbar-label">ขอบเขตรายงาน:</span>
+          <select id="report-filter-mission" class="form-control" style="width: auto; min-width: 240px; font-size: 13px;">
+            <option value="all">ทั้งหมด (ทุกพันธกิจ - ทั้งเล่ม)</option>
+          </select>
+        </div>
+        <div class="report-toolbar-item" style="margin-left: auto;">
+          <span style="font-size: 12px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px;">
+            <i data-lucide="info" style="width: 14px; height: 14px;"></i>
+            จัดวางหน้ากระดาษ: <strong>A4 แนวนอน (Landscape)</strong>
+          </span>
+        </div>
+      </div>
+
+      <div class="report-preview-viewport" id="report-printable-area">
+        <div id="report-content-target">
+          <div style="text-align: center; padding: 50px 0; color: var(--text-muted);">
+            กำลังจัดทำรายงาน...
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 

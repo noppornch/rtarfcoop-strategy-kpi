@@ -1654,6 +1654,32 @@ function setupGlobalEvents() {
     });
   });
 
+  // Report Filter and Print controls binding
+  const reportFilterPlan = document.getElementById('report-filter-plan');
+  if (reportFilterPlan) {
+    reportFilterPlan.addEventListener('change', async (e) => {
+      const pId = e.target.value;
+      await populateReportMissionFilter(pId, 'all');
+      await fetchAndRenderReport(pId, 'all');
+    });
+  }
+
+  const reportFilterMission = document.getElementById('report-filter-mission');
+  if (reportFilterMission) {
+    reportFilterMission.addEventListener('change', (e) => {
+      const pId = document.getElementById('report-filter-plan').value;
+      const mId = e.target.value;
+      fetchAndRenderReport(pId, mId);
+    });
+  }
+
+  const printReportBtn = document.getElementById('btn-print-report-modal');
+  if (printReportBtn) {
+    printReportBtn.addEventListener('click', () => {
+      window.print();
+    });
+  }
+
   // Delete Confirm input code binding
   const confirmInput = document.getElementById('delete-confirm-input');
   if (confirmInput) {
@@ -1846,4 +1872,305 @@ function setupGlobalEvents() {
       alert('เกิดข้อผิดพลาดในการบันทึกผู้ใช้');
     }
   });
+}
+
+// ----------------------------------------------------
+// PDF REPORT GENERATION & PREVIEW (A4 LANDSCAPE)
+// ----------------------------------------------------
+
+window.openReportModal = async function(planId, missionId = 'all') {
+  const modal = document.getElementById('modal-report-preview');
+  if (!modal) return;
+
+  const targetPlanId = planId || selectedPlanId || 1;
+  modal.classList.add('open');
+
+  // Populate plan selector in report toolbar
+  const planSelect = document.getElementById('report-filter-plan');
+  if (planSelect) {
+    try {
+      const res = await fetch('/api/plans');
+      const plans = await res.json();
+      planSelect.innerHTML = '';
+      plans.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.innerText = p.name;
+        if (p.id == targetPlanId) opt.selected = true;
+        planSelect.appendChild(opt);
+      });
+    } catch (err) {
+      console.error('Failed to load plans for report:', err);
+    }
+  }
+
+  // Populate mission selector
+  await populateReportMissionFilter(targetPlanId, missionId);
+
+  // Fetch and display report
+  await fetchAndRenderReport(targetPlanId, missionId);
+};
+
+async function populateReportMissionFilter(planId, selectedMissionId = 'all') {
+  const missionSelect = document.getElementById('report-filter-mission');
+  if (!missionSelect) return;
+  missionSelect.innerHTML = '<option value="all">ทั้งหมด (ทุกพันธกิจ - ทั้งเล่ม)</option>';
+
+  try {
+    const res = await fetch(`/api/plans/${planId}/hierarchy`);
+    const missions = await res.json();
+    missions.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.innerText = `พันธกิจที่ ${m.seq}: ${m.name}`;
+      if (m.id == selectedMissionId) opt.selected = true;
+      missionSelect.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('Failed to load missions for report filter:', err);
+  }
+}
+
+async function fetchAndRenderReport(planId, missionId = 'all') {
+  const container = document.getElementById('report-content-target');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div style="text-align: center; padding: 60px 0; color: #64748b; font-family: Sarabun, sans-serif;">
+      <div style="font-size: 16px; font-weight: 600;">กำลังรวบรวมข้อมูลและจัดทำรายงาน...</div>
+      <div style="font-size: 13px; margin-top: 6px;">กรุณารอสักครู่</div>
+    </div>
+  `;
+
+  try {
+    const url = `/api/reports/strategic-plan/${planId}?missionId=${missionId}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to fetch report data');
+    }
+    const data = await res.json();
+    renderReportHTML(data, missionId);
+  } catch (err) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px 0; color: #ef4444; font-family: Sarabun, sans-serif;">
+        <div style="font-size: 16px; font-weight: 700;">เกิดข้อผิดพลาดในการโหลดข้อมูลรายงาน</div>
+        <div style="font-size: 13px; margin-top: 6px;">${err.message}</div>
+      </div>
+    `;
+  }
+}
+
+function renderReportHTML(data, filteredMissionId) {
+  const container = document.getElementById('report-content-target');
+  if (!container) return;
+
+  const plan = data.plan;
+  const missions = data.missions || [];
+
+  // Format Title:
+  // "ตารางติดตามผลการดำเนินงานตามแผนกลยุทธ์สหกรณ์ออมทรัพย์กองบัญชาการกองทัพไทย จำกัด ( ฉบับที่ 3 ) พ.ศ. 2568 – 2570"
+  let editionText = '';
+  const match = plan.name.match(/ฉบับที่\s*\d+/);
+  if (match) {
+    editionText = `( ${match[0]} )`;
+  } else {
+    editionText = `( ${plan.name} )`;
+  }
+  const reportMainTitle = `ตารางติดตามผลการดำเนินงานตามแผนกลยุทธ์สหกรณ์ออมทรัพย์กองบัญชาการกองทัพไทย จำกัด ${editionText} พ.ศ. ${plan.start_year} – ${plan.end_year}`;
+
+  // Date formatting in Thai
+  const genDate = new Date(data.generated_at);
+  const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+  const formattedDate = `${genDate.getDate()} ${thaiMonths[genDate.getMonth()]} พ.ศ. ${genDate.getFullYear() + 543}`;
+
+  // Helper for status text and badge class
+  const getStatusInfo = (status) => {
+    switch (status) {
+      case 'completed': return { text: 'เสร็จสมบูรณ์', cls: 'report-status-completed' };
+      case 'in_progress': return { text: 'กำลังดำเนินการ', cls: 'report-status-in_progress' };
+      case 'delayed': return { text: 'ล่าช้า', cls: 'report-status-delayed' };
+      case 'pending': default: return { text: 'รอดำเนินการ', cls: 'report-status-pending' };
+    }
+  };
+
+  let html = `
+    <div class="report-paper">
+      <table class="report-wrapper-table">
+        <thead>
+          <tr>
+            <th class="report-wrapper-th">
+              <!-- Report Header (Repeats on every page in Print / PDF) -->
+              <div class="report-doc-header">
+                <div class="report-coop-name">สหกรณ์ออมทรัพย์กองบัญชาการกองทัพไทย จำกัด</div>
+                <div class="report-main-title">${reportMainTitle}</div>
+                <div class="report-meta-bar">
+                  <span>ข้อมูล ณ วันที่: <strong>${formattedDate}</strong></span>
+                  <span>ขอบเขต: <strong>${filteredMissionId && filteredMissionId !== 'all' ? `เฉพาะพันธกิจที่เลือก (${missions.length} พันธกิจ)` : 'ภาพรวมทั้งเล่ม (ทุกพันธกิจ)'}</strong></span>
+                </div>
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  if (missions.length === 0) {
+    html += `
+          <tr>
+            <td class="report-wrapper-td">
+              <div style="text-align: center; padding: 40px; color: #64748b; font-size: 14px;">
+                ไม่มีข้อมูลพันธกิจในแผนงานที่เลือก
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+    container.innerHTML = html;
+    return;
+  }
+
+  // Iterate over each Mission (Each mission is placed in its own row for page breaks)
+  missions.forEach(mission => {
+    html += `
+          <tr class="report-mission-row" data-mission-seq="${mission.seq}">
+            <td class="report-wrapper-td">
+              <div class="report-mission-block">
+                <div class="report-mission-header">
+                  <h4 class="report-mission-title">พันธกิจที่ ${mission.seq} : ${mission.name}</h4>
+                </div>
+    `;
+
+    if (!mission.strategies || mission.strategies.length === 0) {
+      html += `
+                <div style="padding: 10px 14px; color: #94a3b8; font-size: 12px; font-style: italic;">
+                  (ยังไม่มีกลยุทธ์ในพันธกิจนี้)
+                </div>
+      `;
+    } else {
+      // Iterate over each Strategy under this mission (Strategies follow directly without page breaks)
+      mission.strategies.forEach(strategy => {
+        // Format objectives (support multiline)
+        const objectivesHtml = (strategy.objective_name || 'ไม่ระบุ')
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0)
+          .map(line => `<div>${line}</div>`)
+          .join('');
+
+        html += `
+                <div class="report-strategy-block">
+                  <div class="report-strategy-info">
+                    <div class="report-strategy-title">กลยุทธ์ที่ ${strategy.seq} : ${strategy.name}</div>
+                    <div class="report-action-plan-title"><strong>แผนงาน :</strong> ${strategy.action_plan_name || 'ไม่ระบุ'}</div>
+                    <div style="font-size: 12px; color: #334155; margin-top: 3px;">
+                      <strong>วัตถุประสงค์ :</strong>
+                      <div class="report-objective-list">${objectivesHtml}</div>
+                    </div>
+                  </div>
+
+                  <!-- Table 5 Columns -->
+                  <table class="report-table">
+                    <thead>
+                      <tr>
+                        <th class="report-col-seq">ลำดับ</th>
+                        <th class="report-col-kpi">ตัวชี้วัด</th>
+                        <th class="report-col-activity">กิจกรรม</th>
+                        <th class="report-col-result">ผลการดำเนินการ</th>
+                        <th class="report-col-responsible">ผู้รับผิดชอบ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        if (!strategy.activities || strategy.activities.length === 0) {
+          html += `
+                      <tr>
+                        <td colspan="5" style="text-align: center; color: #94a3b8; padding: 16px; font-style: italic;">
+                          ยังไม่มีข้อมูลกิจกรรม / ตัวชี้วัด ในกลยุทธ์นี้
+                        </td>
+                      </tr>
+          `;
+        } else {
+          strategy.activities.forEach((act, idx) => {
+            const stInfo = getStatusInfo(act.progress_status);
+
+            // Responsible person: assignees -> fallback to strategy manager -> fallback to '-'
+            let responsibleText = '-';
+            if (act.assignees && act.assignees.length > 0) {
+              responsibleText = act.assignees.map(u => u.name).join('<br>');
+            } else if (strategy.manager_name) {
+              responsibleText = strategy.manager_name;
+            }
+
+            // Steps HTML
+            let stepsHtml = '';
+            if (act.steps && act.steps.length > 0) {
+              stepsHtml = `
+                <div class="report-steps-box">
+                  ${act.steps.map(step => `
+                    <div class="report-step-item">
+                      <div class="report-step-header">• ${step.step_name} (${step.progress_percent}%)</div>
+                      ${step.actual_result ? `<div class="report-step-result">- ${step.actual_result}</div>` : ''}
+                    </div>
+                  `).join('')}
+                </div>
+              `;
+            }
+
+            // Actual value if present
+            let actualValHtml = '';
+            if (act.actual_value && act.actual_value.trim() !== '') {
+              actualValHtml = `<div style="font-size: 11.5px; color: #0f172a; margin-top: 3px;"><strong>ผลงานจริง:</strong> ${act.actual_value}</div>`;
+            }
+
+            // Target formatting
+            let targetHtml = '';
+            if (act.target_value && act.target_value.trim() !== '') {
+              targetHtml = `<div class="report-kpi-target">(เป้าหมาย: ${act.target_value}${act.kpi_type === 'percentage' ? '%' : ''})</div>`;
+            }
+
+            html += `
+                      <tr>
+                        <td class="report-col-seq">${idx + 1}</td>
+                        <td class="report-col-kpi">
+                          <strong>${act.kpi_name}</strong>
+                          ${targetHtml}
+                        </td>
+                        <td class="report-col-activity">${act.activity}</td>
+                        <td class="report-col-result">
+                          <span class="report-progress-status-box ${stInfo.cls}">
+                            ความก้าวหน้า ${act.progress_percent}% (${stInfo.text})
+                          </span>
+                          ${actualValHtml}
+                          ${stepsHtml}
+                        </td>
+                        <td class="report-col-responsible">${responsibleText}</td>
+                      </tr>
+            `;
+          });
+        }
+
+        html += `
+                    </tbody>
+                  </table>
+                </div>
+        `;
+      });
+    }
+
+    html += `
+              </div>
+            </td>
+          </tr>
+    `;
+  });
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+  container.innerHTML = html;
 }

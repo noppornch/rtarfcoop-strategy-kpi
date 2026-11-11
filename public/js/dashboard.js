@@ -44,7 +44,13 @@ async function loadDashboardStats(planId) {
         item.innerHTML = `
           <div class="mission-progress-header">
             <span class="mission-progress-name" title="${m.name}">พันธกิจที่ ${m.seq}: ${m.name}</span>
-            <span class="mission-progress-value">${m.avg_progress || 0}%</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="mission-progress-value">${m.avg_progress || 0}%</span>
+              <button class="btn btn-secondary btn-print-mission" data-mission-id="${m.id}" data-mission-seq="${m.seq}" style="padding: 2px 8px; font-size: 11px; height: 26px; display: inline-flex; align-items: center; gap: 4px;" title="พิมพ์รายงานเฉพาะพันธกิจที่ ${m.seq}">
+                <i data-lucide="printer" style="width: 12px; height: 12px;"></i>
+                <span>ออกรายงาน</span>
+              </button>
+            </div>
           </div>
           <div class="progress-container">
             <div class="progress-fill" style="width: ${m.avg_progress || 0}%;"></div>
@@ -53,8 +59,33 @@ async function loadDashboardStats(planId) {
         `;
         missionListContainer.appendChild(item);
       });
+
+      // Bind individual mission report buttons
+      missionListContainer.querySelectorAll('.btn-print-mission').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const mId = btn.dataset.missionId;
+          if (window.openReportModal) {
+            window.openReportModal(planId, mId);
+          }
+        });
+      });
     } else {
       missionListContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 13px; padding: 20px 0;">ยังไม่มีกิจกรรมบันทึก</div>';
+    }
+
+    // Bind Full Report button in dashboard header
+    const fullReportBtn = document.getElementById('btn-dashboard-print-full');
+    if (fullReportBtn) {
+      fullReportBtn.onclick = () => {
+        if (window.openReportModal) {
+          window.openReportModal(planId, 'all');
+        }
+      };
+    }
+
+    if (window.lucide) {
+      window.lucide.createIcons();
     }
 
     // 6. Draw Chart.js Doughnut Chart

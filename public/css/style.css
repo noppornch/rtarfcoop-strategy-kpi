@@ -1446,3 +1446,531 @@ body.dark-mode .login-card {
   font-size: 11px;
   border-radius: var(--radius-sm);
 }
+
+/* ----------------------------------------------------
+   DASHBOARD ACTIONS BAR & REPORT BUTTONS
+---------------------------------------------------- */
+.dashboard-actions-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  margin-bottom: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.dashboard-heading {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.dashboard-subheading {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 2px 0 0 0;
+}
+
+.btn-print-full {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+/* ----------------------------------------------------
+   REPORT PREVIEW MODAL & A4 LANDSCAPE STYLES
+---------------------------------------------------- */
+.modal-card-fullscreen {
+  max-width: 95vw !important;
+  width: 1350px !important;
+  height: 92vh !important;
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.modal-card-fullscreen .modal-header {
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+}
+
+.report-modal-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--bg-app);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.report-toolbar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.report-toolbar-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.report-preview-viewport {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-lg);
+  background: #525659;
+  display: flex;
+  justify-content: center;
+}
+
+/* Simulated A4 Landscape Paper */
+.report-paper {
+  background: #ffffff !important;
+  color: #1e293b !important;
+  width: 100%;
+  max-width: 1200px;
+  min-height: 800px;
+  padding: 35px 40px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-family: 'Sarabun', 'TH Sarabun New', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+.report-doc-header {
+  text-align: center;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #0f172a;
+  padding-bottom: 14px;
+}
+
+.report-wrapper-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: none;
+  background: transparent;
+  margin: 0;
+  padding: 0;
+}
+
+.report-wrapper-th {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font-weight: normal;
+  text-align: left;
+}
+
+.report-wrapper-td {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+.report-coop-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.report-main-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 6px 0;
+  line-height: 1.4;
+}
+
+.report-meta-bar {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 8px;
+}
+
+/* Visual divider between missions in on-screen preview */
+.report-mission-row:not(:first-child) .report-mission-block {
+  margin-top: 28px;
+  border-top: 2px dashed #cbd5e1;
+  padding-top: 20px;
+}
+
+/* Mission & Strategy Hierarchy Sections */
+.report-mission-block {
+  margin-bottom: 16px;
+}
+
+.report-mission-header {
+  background: #f1f5f9;
+  border-left: 5px solid #2563eb;
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  border-radius: 2px;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+.report-mission-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+/* Strategies follow directly under the mission (Continuous flow) */
+.report-strategy-block {
+  margin-bottom: 16px;
+  page-break-before: auto;
+  break-before: auto;
+  page-break-inside: auto;
+  break-inside: auto;
+}
+
+.report-strategy-info {
+  background: #fafafa;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+.report-strategy-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.report-action-plan-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2563eb;
+  margin-bottom: 4px;
+}
+
+.report-objective-list {
+  font-size: 12px;
+  color: #475569;
+  margin: 4px 0 0 0;
+  line-height: 1.4;
+  white-space: pre-line;
+}
+
+/* Formal 5-column Report Table */
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 6px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  background: #ffffff;
+  page-break-inside: auto;
+  break-inside: auto;
+}
+
+.report-table th, 
+.report-table td {
+  border: 1px solid #cbd5e1;
+  padding: 8px 10px;
+  vertical-align: top;
+  text-align: left;
+}
+
+.report-table th {
+  background-color: #f8fafc;
+  color: #0f172a;
+  font-weight: 700;
+  text-align: center;
+  font-size: 12.5px;
+}
+
+.report-col-seq {
+  width: 5%;
+  text-align: center !important;
+  font-weight: 600;
+}
+
+.report-col-kpi {
+  width: 23%;
+}
+
+.report-col-activity {
+  width: 27%;
+  white-space: pre-line;
+}
+
+.report-col-result {
+  width: 32%;
+}
+
+.report-col-responsible {
+  width: 13%;
+  text-align: center;
+}
+
+.report-kpi-target {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 3px;
+}
+
+.report-progress-status-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-bottom: 6px;
+}
+
+.report-status-completed {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.report-status-in_progress {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.report-status-pending {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.report-status-delayed {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.report-steps-box {
+  margin-top: 4px;
+  font-size: 11.5px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.report-step-item {
+  border-left: 2px solid #cbd5e1;
+  padding-left: 6px;
+  margin-bottom: 2px;
+}
+
+.report-step-header {
+  font-weight: 600;
+  color: #334155;
+}
+
+.report-step-result {
+  color: #475569;
+  font-size: 11px;
+  margin-top: 1px;
+  white-space: pre-line;
+}
+
+/* ----------------------------------------------------
+   PRINT OPTIMIZATION (A4 LANDSCAPE)
+---------------------------------------------------- */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm 10mm 8mm 10mm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    font-size: 11pt !important;
+  }
+
+  /* Hide entire web application wrapper and other modals */
+  .app-container,
+  .modal-overlay:not(#modal-report-preview) {
+    display: none !important;
+  }
+
+  /* Make report modal plain full page */
+  #modal-report-preview {
+    position: static !important;
+    display: block !important;
+    background: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    z-index: auto !important;
+  }
+
+  #modal-report-preview .modal-card {
+    position: static !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+
+  .report-preview-viewport {
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  .report-paper {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    min-height: auto !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .report-table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    margin-top: 4px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .report-table th,
+  .report-table td {
+    border: 1px solid #333333 !important;
+    color: #000000 !important;
+  }
+
+  .report-table thead {
+    display: table-header-group !important;
+  }
+
+  .report-table tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  /* 1. Header repeats on every page */
+  .report-wrapper-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .report-wrapper-table > thead {
+    display: table-header-group !important;
+  }
+
+  .report-wrapper-th,
+  .report-wrapper-td {
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .report-doc-header {
+    margin-bottom: 14px !important;
+    border-bottom: 2px solid #000000 !important;
+    padding-bottom: 8px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* 2. Page break on every mission */
+  .report-mission-row:not(:first-child) {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  .report-mission-row:first-child {
+    page-break-before: avoid !important;
+    break-before: avoid !important;
+  }
+
+  .report-mission-row:not(:first-child) .report-mission-block {
+    margin-top: 0 !important;
+    border-top: none !important;
+    padding-top: 0 !important;
+  }
+
+  .report-mission-block {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  .report-mission-header {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  /* 3. Strategies follow immediately under the mission (NO page break between strategies) */
+  .report-strategy-block {
+    page-break-before: auto !important;
+    break-before: auto !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    margin-bottom: 12px !important;
+  }
+
+  .report-strategy-info {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+}

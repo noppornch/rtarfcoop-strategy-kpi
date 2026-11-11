@@ -846,6 +846,86 @@ app.get('/api/dashboard/stats', requireAuth, async (req, res) => {
   }
 });
 
+// ----------------------------------------------------
+// PDF REPORT API (Strategic Plan Report)
+// ----------------------------------------------------
+app.get('/api/reports/strategic-plan/:id', requireAuth, async (req, res) => {
+  try {
+    const planId = req.params.id;
+    const missionId = req.query.missionId;
+
+    const plan = await queryGet('SELECT * FROM strategic_plans WHERE id = ?', [planId]);
+    if (!plan) {
+      return res.status(404).json({ error: 'ไม่พบข้อมูลแผนกลยุทธ์' });
+    }
+
+    let missionSql = 'SELECT * FROM missions WHERE strategic_plan_id = ?';
+    const missionParams = [planId];
+    if (missionId && missionId !== 'all') {
+      missionSql += ' AND id = ?';
+      missionParams.push(missionId);
+    }
+    missionSql += ' ORDER BY seq ASC';
+
+    const missions = await queryAll(missionSql, missionParams);
+
+    for (const mission of missions) {
+      const strategies = await queryAll(`
+        SELECT s.*, u.name as manager_name
+        FROM strategies s
+        LEFT JOIN users u ON s.manager_id = u.id
+        WHERE s.mission_id = ?
+        ORDER BY s.seq ASC
+      `, [mission.id]);
+
+      for (const strategy of strategies) {
+        const activities = await queryAll(`
+          SELECT * FROM kpi_activities
+          WHERE strategy_id = ?
+          ORDER BY seq ASC
+        `, [strategy.id]);
+
+        for (const act of activities) {
+          // Assignees
+          const assignees = await queryAll(`
+            SELECT u.id, u.name, u.role
+            FROM users u
+            JOIN kpi_assignees ka ON u.id = ka.user_id
+            WHERE ka.kpi_activity_id = ?
+          `, [act.id]);
+          act.assignees = assignees;
+
+          // Steps
+          const steps = await queryAll(`
+            SELECT * FROM activity_steps
+            WHERE kpi_activity_id = ?
+            ORDER BY seq ASC
+          `, [act.id]);
+          act.steps = steps;
+
+          // Calculate progress percent
+          if (steps.length > 0) {
+            const sum = steps.reduce((acc, curr) => acc + (curr.progress_percent || 0), 0);
+            act.progress_percent = Math.round(sum / steps.length);
+          } else {
+            act.progress_percent = act.progress_status === 'completed' ? 100 : (act.progress_status === 'pending' ? 0 : 50);
+          }
+        }
+        strategy.activities = activities;
+      }
+      mission.strategies = strategies;
+    }
+
+    res.json({
+      plan,
+      missions,
+      generated_at: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Serve frontend routing fallback
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
